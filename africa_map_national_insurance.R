@@ -1,12 +1,7 @@
 # MSahu
-# Oct 17, 2023
+# Dec 30, 2023
 
 # Map of health insurance programs across Africa
-
-# TO DO: 
-# Western Sahara??
-# Add margins around title?
-
 
 library(readxl)
 library(sf)
@@ -27,14 +22,13 @@ rm(list=ls())
 
 dir <- "C:/Users/msahu/OneDrive - UW/Documents/Research/IHME/FGH/Health insurance/"
 
-insurance_coverage <- read_xlsx(paste0(dir, "lit review africa health insurance coverage_revised.xlsx"),
+insurance_coverage <- read_xlsx(paste0(dir, "lit review africa health insurance coverage_revised_cashin.xlsx"),
                                 sheet = "Data") %>% 
   rename(iso_a3 = ISO3) %>% 
   
-  mutate(`National (public) health insurance?` = factor(`National (public) health insurance?`,
-         levels = c("Yes, coverage >40%", "Yes, coverage <40%", "Yes, coverage unknown",
-                    "No, bill passed in 2023 but not yet implemented",
-                    "No, planned but not implemented",
+  mutate(`National (public) health insurance?` = factor(ifelse(`National (public) health insurance? [Cashin]`=="NA", NA, `National (public) health insurance? [Cashin]`),
+         levels = c("Yes, coverage >40%", "Yes, coverage <20%", 
+                    "Planned but not yet implemented",
                     "No"))) %>% 
   
   mutate(`Any national insurance?` = factor(
@@ -133,7 +127,7 @@ pdf(paste0(dir,"insurance_map_africa_pattern.pdf"), width = 10, height = 12, one
 ggplot(data = africa_merged, aes(map_id = Country, x = x, y = y, 
                                  fill = `National (public) health insurance?`)) +
   geom_sf(linewidth = 0.2) +
-  scale_fill_brewer(palette = "RdYlBu", direction = -1) +
+  scale_fill_manual(values = c("#4575b4", "#abd9e9", "#fee090", "white"), na.value="#ececec") +
   geom_map_pattern(size = .2, 
                    aes(pattern = `Published research using claims data?`),
                        fill = "#00000000",
@@ -147,7 +141,9 @@ ggplot(data = africa_merged, aes(map_id = Country, x = x, y = y,
   theme_void() +
   expand_limits(x = africa_map$long, y = africa_map$lat) +
   coord_sf() +
-  ggtitle("Does a national public insurance program exist, and has there been published research\nusing claims data?") 
+  labs(title = "Does a national public insurance program exist, and has\nthere been published research using claims data?",
+       caption = "Status of insurance programs adapted from Cashin and Dossou, 2021") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 dev.off()
 
